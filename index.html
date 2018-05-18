@@ -122,16 +122,21 @@ $(document).ready(function () {
 </div>
 
 
-<p>Kuoyuan Yang May 17th</p>
+<p>Kuoyuan Yang</p>
+<p>May 17th</p>
 <div id="introduction" class="section level1">
-<h1>Introduction</h1>
-<p>Pokemon is one of the most if not the most popular games in the world. This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare.</p>
+<h1>1 Introduction</h1>
+<div id="motivation" class="section level2">
+<h2>1.1 Motivation</h2>
+<p>Pokemon is one of the most if not the most popular games in the world. I’ve always been a fan of pokemon, the game and the anime.</p>
+<p>This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare.</p>
 <p>I will first take a dataset with relevant information and clean up the data to better analyze information.</p>
 <p>Next, I will do some exploratory data analysis to help me find a testable hypothesis.</p>
 <p>Finally, I will use machine learning to predict the strength of pokemon based on its capture rate. I will use regression analysis in order to gain insight to see trends that we might have not expected or not see trends where we might have once expected there to be a trend.</p>
 </div>
+</div>
 <div id="getting-started" class="section level1">
-<h1>getting started</h1>
+<h1>1.2 Getting started</h1>
 <p>For this tutorial I will be using the R programming language and RStudio as my development environment. Many of the functions used in this tutorial can be found in the Tidyverse library.</p>
 <p>The dataset can be found here: <a href="https://www.kaggle.com/rounakbanik/pokemon/data" class="uri">https://www.kaggle.com/rounakbanik/pokemon/data</a></p>
 <p>After downloading the csv file and placing it in the same directory, we can load in the data and look at the first few lines of the data using head(dataset) or the last few lines of the data using tail(dataset).</p>
@@ -266,9 +271,91 @@ head(pokemon)</code></pre>
 ## 801          7            1</code></pre>
 <p>As shown by the output, our dataset on pokemon shows stats for pokemon: attack, defense, hp, special attack, capture rate, type, poke index, etc.</p>
 </div>
-<div id="tidying-data" class="section level1">
-<h1>Tidying Data</h1>
-<p>After loading in the dataset, we will now try to clean up the data for it to be better prepared for future analysis.</p>
+<div id="exploratory-data-analysis-eda" class="section level1">
+<h1>2 Exploratory Data Analysis (EDA)</h1>
+<p>Now that we have all the data that we set up, we will now try to analyze the data.</p>
+<p>Start by loading in libraries that contains functions that can help us.</p>
+<pre class="r"><code>library(tidyverse)
+library(dplyr)</code></pre>
+<div id="adding-extra-columns" class="section level2">
+<h2>2.1 Adding extra columns</h2>
+<p>To assess the relationship between strength and rarity, we will need a column called strength that takes into account all stats.</p>
+<p>Since stats such as hp, attack, speed, etc. all have different units, we will first standardize them.</p>
+<pre class="r"><code>pokemon_df &lt;- pokemon %&gt;%
+  mutate(std_hp = (hp - mean(hp))/sd(hp)) %&gt;%
+  mutate(std_atk = (attack - mean(attack))/sd(attack)) %&gt;%
+  mutate(std_def = (defense - mean(defense))/sd(defense)) %&gt;%
+  mutate(std_sp_atk = (sp_attack - mean(sp_attack))/sd(sp_attack)) %&gt;%
+  mutate(std_spd = (speed - mean(speed))/sd(speed)) %&gt;%
+  mutate(std_sp_def = (sp_defense - mean(sp_defense))/sd(sp_defense))
+pokemon_df %&gt;%
+  select(name, std_hp,std_atk,std_def,std_sp_atk,std_spd,std_sp_def) %&gt;%
+  head()</code></pre>
+<pre><code>##         name     std_hp    std_atk    std_def std_sp_atk     std_spd
+## 1  Bulbasaur -0.9015197 -0.8973488 -0.7802858 -0.1949033 -0.73802516
+## 2    Ivysaur -0.3371010 -0.4931051 -0.3252848  0.2687204 -0.21913159
+## 3   Venusaur  0.4154573  0.6885303  1.6247197  1.5668667  0.47272651
+## 4 Charmander -1.1272872 -0.8040618 -0.9752863 -0.3494445 -0.04616706
+## 5 Charmeleon -0.4123568 -0.4309138 -0.4877852  0.2687204  0.47272651
+## 6  Charizard  0.3402014  0.8129130  0.1622164  2.7104718  1.16458461
+##   std_sp_def
+## 1 -0.2115545
+## 2  0.3252622
+## 3  1.7567733
+## 4 -0.7483711
+## 5 -0.2115545
+## 6  1.5778344</code></pre>
+<p>We also define versatility as how effective each pokemon is against all other types, instead of just against 1 type; we’ll standardize versatility as well.</p>
+<pre class="r"><code>pokemon_df &lt;- pokemon_df %&gt;%
+  mutate(versatility = against_bug + against_dark + against_dragon + against_electric + against_fairy + against_fight + against_fire + against_flying + against_ghost + against_grass + against_ground + against_ice + against_normal + against_poison + against_psychic + against_rock + against_steel + against_water) %&gt;%
+  mutate(std_ver = (versatility - mean(versatility))/sd(versatility))</code></pre>
+<p>Now we define strength as the sum of all other stats</p>
+<pre class="r"><code>pokemon_df &lt;- pokemon_df %&gt;%
+  mutate(strength = std_hp+std_atk+std_def+std_sp_atk+std_spd+std_sp_def+std_ver)
+
+pokemon_df %&gt;%
+  select(name, strength) %&gt;%
+  head()</code></pre>
+<pre><code>##         name  strength
+## 1  Bulbasaur -3.615533
+## 2    Ivysaur -0.672536
+## 3   Venusaur  6.633178
+## 4 Charmander -4.598508
+## 5 Charmeleon -1.349053
+## 6  Charizard  6.482729</code></pre>
+</div>
+<div id="removing-extra-information" class="section level2">
+<h2>2.2 Removing Extra Information</h2>
+<p>We can see that the first column is a list of the pokemon’s abilities. What we want is a column for each ability. However, since we won’t be using pokemons’ abilities for any analysis, we will simply remove this column and any other column that will not be used for our future analysis.</p>
+<pre class="r"><code>pokemon_df &lt;- pokemon_df %&gt;%
+  select(name, strength, attack, capture_rate, defense, hp, sp_attack, sp_defense, speed, versatility, generation, std_hp, std_atk, std_def, std_sp_atk, std_spd, std_sp_def, std_ver)
+
+head(pokemon_df)</code></pre>
+<pre><code>##         name  strength attack capture_rate defense hp sp_attack sp_defense
+## 1  Bulbasaur -3.615533     49           45      49 45        65         65
+## 2    Ivysaur -0.672536     62           45      63 60        80         80
+## 3   Venusaur  6.633178    100           45     123 80       122        120
+## 4 Charmander -4.598508     52           45      43 39        60         50
+## 5 Charmeleon -1.349053     64           45      58 58        80         65
+## 6  Charizard  6.482729    104           45      78 78       159        115
+##   speed versatility generation     std_hp    std_atk    std_def std_sp_atk
+## 1    45       19.25          1 -0.9015197 -0.8973488 -0.7802858 -0.1949033
+## 2    60       19.25          1 -0.3371010 -0.4931051 -0.3252848  0.2687204
+## 3    80       19.25          1  0.4154573  0.6885303  1.6247197  1.5668667
+## 4    65       18.00          1 -1.1272872 -0.8040618 -0.9752863 -0.3494445
+## 5    80       18.00          1 -0.4123568 -0.4309138 -0.4877852  0.2687204
+## 6   100       18.50          1  0.3402014  0.8129130  0.1622164  2.7104718
+##       std_spd std_sp_def    std_ver
+## 1 -0.73802516 -0.2115545  0.1081039
+## 2 -0.21913159  0.3252622  0.1081039
+## 3  0.47272651  1.7567733  0.1081039
+## 4 -0.04616706 -0.7483711 -0.5478900
+## 5  0.47272651 -0.2115545 -0.5478900
+## 6  1.16458461  1.5778344 -0.2854925</code></pre>
+</div>
+<div id="visualization" class="section level2">
+<h2>2.3 Visualization</h2>
+</div>
 </div>
 
 

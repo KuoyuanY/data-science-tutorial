@@ -7,10 +7,15 @@ knitr::opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
 Kuoyuan Yang
+
 May 17th
 
-# Introduction
-Pokemon is one of the most if not the most popular games in the world. This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare. 
+# 1 Introduction
+
+## 1.1 Motivation 
+Pokemon is one of the most if not the most popular games in the world. I've always been a fan of pokemon, the game and the anime. 
+
+This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare. 
 
 I will first take a dataset with relevant information and clean up the data to better analyze information.
 
@@ -18,7 +23,7 @@ Next, I will do some exploratory data analysis to help me find a testable hypoth
 
 Finally, I will use machine learning to predict the strength of pokemon based on its capture rate. I will use regression analysis in order to gain insight to see trends that we might have not expected or not see trends where we might have once expected there to be a trend.
 
-# getting started
+# 1.2 Getting started
 
 For this tutorial I will be using the R programming language and RStudio as my development environment. Many of the functions used in this tutorial can be found in the Tidyverse library.
 
@@ -37,8 +42,67 @@ tail(pokemon)
 
 As shown by the output, our dataset on pokemon shows stats for pokemon: attack, defense, hp, special attack, capture rate, type, poke index, etc.
 
-# Tidying Data
+# 2 Exploratory Data Analysis (EDA)
 
-After loading in the dataset, we will now try to clean up the data for it to be better prepared for future analysis.
+Now that we have all the data that we set up, we will now try to analyze the data.
+
+Start by loading in libraries that contains functions that can help us.
+
+```{r}
+library(tidyverse)
+library(dplyr)
+```
+
+## 2.1 Adding extra columns
+
+To assess the relationship between strength and rarity, we will need a column called strength that takes into account all stats.
+
+Since stats such as hp, attack, speed, etc. all have different units, we will first standardize them.
+
+```{r}
+pokemon_df <- pokemon %>%
+  mutate(std_hp = (hp - mean(hp))/sd(hp)) %>%
+  mutate(std_atk = (attack - mean(attack))/sd(attack)) %>%
+  mutate(std_def = (defense - mean(defense))/sd(defense)) %>%
+  mutate(std_sp_atk = (sp_attack - mean(sp_attack))/sd(sp_attack)) %>%
+  mutate(std_spd = (speed - mean(speed))/sd(speed)) %>%
+  mutate(std_sp_def = (sp_defense - mean(sp_defense))/sd(sp_defense))
+pokemon_df %>%
+  select(name, std_hp,std_atk,std_def,std_sp_atk,std_spd,std_sp_def) %>%
+  head()
+```
+
+We also define versatility as how effective each pokemon is against all other types, instead of just against 1 type; we'll standardize versatility as well.
+
+```{r}
+pokemon_df <- pokemon_df %>%
+  mutate(versatility = against_bug + against_dark + against_dragon + against_electric + against_fairy + against_fight + against_fire + against_flying + against_ghost + against_grass + against_ground + against_ice + against_normal + against_poison + against_psychic + against_rock + against_steel + against_water) %>%
+  mutate(std_ver = (versatility - mean(versatility))/sd(versatility))
+
+```
+
+Now we define strength as the sum of all other stats
+
+```{r}
+pokemon_df <- pokemon_df %>%
+  mutate(strength = std_hp+std_atk+std_def+std_sp_atk+std_spd+std_sp_def+std_ver)
+
+pokemon_df %>%
+  select(name, strength) %>%
+  head()
+```
+
+## 2.2 Removing Extra Information
+
+We can see that the first column is a list of the pokemon's abilities. What we want is a column for each ability. However, since we won't be using pokemons' abilities for any analysis, we will simply remove this column and any other column that will not be used for our future analysis.
+
+```{r}
+pokemon_df <- pokemon_df %>%
+  select(name, strength, attack, capture_rate, defense, hp, sp_attack, sp_defense, speed, versatility, generation, std_hp, std_atk, std_def, std_sp_atk, std_spd, std_sp_def, std_ver)
+
+head(pokemon_df)
+```
+
+## 2.3 Visualization
 
 
