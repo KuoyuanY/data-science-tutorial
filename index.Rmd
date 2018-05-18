@@ -15,13 +15,13 @@ May 17th
 ## 1.1 Motivation 
 Pokemon is one of the most if not the most popular games in the world. I've always been a fan of pokemon, the game and the anime. 
 
-This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare. 
+This is a tutorial for data science, in which I will attempt to find trends on between the strength of pokemon (attack, defense, hp, etc) and other stats to find factors that influence strength.
 
 I will first take a dataset with relevant information and clean up the data to better analyze information.
 
 Next, I will do some exploratory data analysis to help me find a testable hypothesis.
 
-Finally, I will use machine learning to predict the strength of pokemon based on its capture rate. I will use regression analysis in order to gain insight to see trends that we might have not expected or not see trends where we might have once expected there to be a trend.
+Finally, I will use machine learning to predict the strength of pokemon based on other stats. I will use regression analysis in order to gain insight to see trends that we might have not expected or not see trends where we might have once expected there to be a trend.
 
 # 1.2 Getting started
 
@@ -55,7 +55,7 @@ library(dplyr)
 
 ## 2.1 Adding extra columns
 
-To assess the relationship between strength and rarity, we will need a column called strength that takes into account all stats.
+To assess the relationship between strength and other stats, we will need a column called strength that takes into account all stats.
 
 Since stats such as hp, attack, speed, etc. all have different units, we will first standardize them.
 
@@ -92,17 +92,73 @@ pokemon_df %>%
   head()
 ```
 
+Finally we convert capture rate to rarity to find relationship between rarity and strength
+```{r}
+pokemon_df <- pokemon_df %>%
+  mutate(rarity = 1.0/as.numeric(capture_rate))
+```
+
 ## 2.2 Removing Extra Information
 
 We can see that the first column is a list of the pokemon's abilities. What we want is a column for each ability. However, since we won't be using pokemons' abilities for any analysis, we will simply remove this column and any other column that will not be used for our future analysis.
 
 ```{r}
 pokemon_df <- pokemon_df %>%
-  select(name, strength, attack, capture_rate, defense, hp, sp_attack, sp_defense, speed, versatility, generation, std_hp, std_atk, std_def, std_sp_atk, std_spd, std_sp_def, std_ver)
+  select(name, strength, rarity, attack, capture_rate, defense, hp, sp_attack, sp_defense, speed, versatility, generation, std_hp, std_atk, std_def, std_sp_atk, std_spd, std_sp_def, std_ver, weight_kg, classfication, height_m)
 
 head(pokemon_df)
 ```
 
 ## 2.3 Visualization
+At this point, we are ready to do some analysis.
 
+The point of EDA is to get more information about general trends and patterns in our data so that we can make testable hypotheses. We will perform two kinds of analysis: visualization and statistical measures.
+
+### 2.3.1 Does rarity affect strength?
+
+We start with the relationship between attack and rarity
+
+```{r}
+library(ggplot2)
+pokemon_df %>% 
+  ggplot(aes(x = rarity, y = strength)) +
+  geom_smooth() +
+  labs(title = "Relationship between strength and rarity",
+       x = "Rarity",
+       y = "Strength")
+```
+
+It seems that there isn't a clear linear relationship between strength and rarity. There are pokemon that are not super rare, but still really strong. 
+
+### 2.3.1 Does weight affect strength?
+```{r}
+pokemon_df %>% 
+  ggplot(aes(x = weight_kg, y = strength)) +
+  geom_smooth() +
+  labs(title = "Relationship between weight and strength",
+       x = "Weight",
+       y = "strength")
+```
+
+It seems that as weight gets higher, pokemon are more likely to be stronger. However, after a certain weight, pokemon becomes obese and strength starts to have a decreasing trend as weight increases.
+
+It can also be seen that lower weight has a smaller spread of data. The strength of lower weight pokemon has smaller range (is more steady) than that of heavier pokemon.
+
+### Does Body mass index affect strength?
+
+Since weight has a dip after a certain weight, this makes me think that pokemon that are lean and big are stronger. So I have decided to use body mass index instead of just weight.
+
+```{r}
+pokemon_df <- pokemon_df %>%
+  mutate(bmi = weight_kg/height_m)
+
+pokemon_df %>% 
+  ggplot(aes(x = bmi, y = strength)) +
+  geom_smooth() +
+  labs(title = "Relationship between BMI and strength",
+       x = "Body Mass Index",
+       y = "Strength")
+```
+
+Now that we used body mass index, we can see that pokemon that are too fat/lean tend to be weaker than those who are fit.
 
