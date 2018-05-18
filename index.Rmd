@@ -1,0 +1,44 @@
+---
+title: "Analysis on Pokemon"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+Kuoyuan Yang
+May 17th
+
+# Introduction
+Pokemon is one of the most if not the most popular games in the world. This is a tutorial for data science, in which I will attempt to find a relationship between the strength of pokemon (attack, defense, hp, etc) and its capture rate to see if rarer pokemon are stronger than those who are less rare. 
+
+I will first take a dataset with relevant information and clean up the data to better analyze information.
+
+Next, I will do some exploratory data analysis to help me find a testable hypothesis.
+
+Finally, I will use machine learning to predict the strength of pokemon based on its capture rate. I will use regression analysis in order to gain insight to see trends that we might have not expected or not see trends where we might have once expected there to be a trend.
+
+# getting started
+
+For this tutorial I will be using the R programming language and RStudio as my development environment. Many of the functions used in this tutorial can be found in the Tidyverse library.
+
+The dataset can be found here: https://www.kaggle.com/rounakbanik/pokemon/data
+
+After downloading the csv file and placing it in the same directory, we can load in the data and look at the first few lines of the data using head(dataset) or the last few lines of the data using tail(dataset).
+
+```{r}
+pokemon <- read.csv('./pokemon.csv')
+head(pokemon)
+```
+
+```{r}
+tail(pokemon)
+```
+
+As shown by the output, our dataset on pokemon shows stats for pokemon: attack, defense, hp, special attack, capture rate, type, poke index, etc.
+
+# Tidying Data
+
+After loading in the dataset, we will now try to clean up the data for it to be better prepared for future analysis.
+
+
